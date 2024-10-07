@@ -71,6 +71,12 @@
     <!-- Container for Grid (Books/Customers) -->
     <div id="dataGrid" class="container mt-5"></div>
 
+    <!-- About link below the grid -->
+    <div class="container text-center mt-3">
+      <a class="navbar-brand" href="./about.html" style="display: block;; font-size: 24px;">About</a>
+    </div>
+
+
     <!-- Modal for delete confirmation -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -167,6 +173,42 @@
       </div>
     </div>
 
+        <!-- Modal for editing loan details -->
+    <div class="modal fade" id="editLoanModal" tabindex="-1" aria-labelledby="editLoanModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editLoanModalLabel">Edit Loan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editLoanForm">
+              <div class="mb-3">
+                <label for="loanBookId" class="form-label">Book ID</label>
+                <input type="number" class="form-control" id="loanBookId" required>
+              </div>
+              <div class="mb-3">
+                <label for="loanCustomerId" class="form-label">Customer ID</label>
+                <input type="number" class="form-control" id="loanCustomerId" required>
+              </div>
+              <div class="mb-3">
+                <label for="loanDate" class="form-label">Loan Date</label>
+                <input type="date" class="form-control" id="loanDate" required>
+              </div>
+              <div class="mb-3">
+                <label for="returnDate" class="form-label">Return Date</label>
+                <input type="date" class="form-control" id="returnDate" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveLoanChangesBtn">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <script>
       const SERVER = 'http://127.0.0.1:5000';
@@ -174,6 +216,8 @@
       let bookToDelete = null;  // Will store the book ID to delete
       let customerToDelete = null;  // Will store the customer ID to delete
       let bookToEdit = null;
+      let loanToEdit = null;  // Variable to store the loan object to be edited
+
 
 
       // Get the carousel element
@@ -419,6 +463,7 @@
           let editBtn = document.createElement('button');
           editBtn.className = 'btn btn-primary';
           editBtn.textContent = 'Edit';
+          editBtn.onclick = () => openEditLoanModal(loan);  // Open the edit modal for loans
           buttonsCol.appendChild(editBtn);
 
           // Delete button
@@ -590,6 +635,46 @@
 
       // Event listener for the Reset DB button
       document.getElementById('resetDbBtn').addEventListener('click', resetDatabase);
+
+      // Function to open the Edit modal for loans and pre-populate the form
+      function openEditLoanModal(loan) {
+        loanToEdit = loan; // Store the loan object
+
+        // Pre-fill the form fields with the loan details
+        document.getElementById('loanBookId').value = loan.book_id;
+        document.getElementById('loanCustomerId').value = loan.customer_id;
+        document.getElementById('loanDate').value = loan.loan_date;
+        document.getElementById('returnDate').value = loan.return_date;
+
+        // Show the modal
+        const editLoanModal = new bootstrap.Modal(document.getElementById('editLoanModal'));
+        editLoanModal.show();
+      }
+
+      // Handle the Save Changes button click for loans
+      document.getElementById('saveLoanChangesBtn').addEventListener('click', async function () {
+        if (loanToEdit) {
+          // Get the updated data from the form
+          const updatedLoan = {
+            book_id: parseInt(document.getElementById('loanBookId').value),
+            customer_id: parseInt(document.getElementById('loanCustomerId').value),
+            loan_date: document.getElementById('loanDate').value,
+            return_date: document.getElementById('returnDate').value
+          };
+
+          try {
+            // Send PUT request to update the loan
+            await axios.put(`${SERVER}/updateLoan/${loanToEdit.id}`, updatedLoan);
+            showLoansGrid(); // Refresh the grid after saving changes
+
+            const editLoanModal = bootstrap.Modal.getInstance(document.getElementById('editLoanModal'));
+            editLoanModal.hide(); // Close the modal
+          } catch (error) {
+            console.error('Error updating the loan:', error);
+            alert("Failed to update the loan.");
+          }
+        }
+      });
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
