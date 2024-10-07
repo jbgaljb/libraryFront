@@ -135,6 +135,39 @@
     </div>
 
 
+        <!-- Modal for editing customer details -->
+    <div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCustomerModalLabel">Edit Customer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editCustomerForm">
+              <div class="mb-3">
+                <label for="customerName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="customerName" required>
+              </div>
+              <div class="mb-3">
+                <label for="customerCity" class="form-label">City</label>
+                <input type="text" class="form-control" id="customerCity" required>
+              </div>
+              <div class="mb-3">
+                <label for="customerAge" class="form-label">Age</label>
+                <input type="number" class="form-control" id="customerAge" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveCustomerChangesBtn">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <script>
       const SERVER = 'http://127.0.0.1:5000';
       let loanToDelete = null;  // Will store the loan ID to delete
@@ -310,6 +343,7 @@
           let editBtn = document.createElement('button');
           editBtn.className = 'btn btn-primary';
           editBtn.textContent = 'Edit';
+          editBtn.onclick = () => openEditCustomerModal(customer); // Open the edit modal for customers
           buttonsCol.appendChild(editBtn);
 
           // Delete button
@@ -450,6 +484,46 @@
         deleteModal.hide();
       });
 
+      let customerToEdit = null; // To store the customer object for editing
+
+      // Function to open the Edit modal for customers and pre-populate the form
+      function openEditCustomerModal(customer) {
+        customerToEdit = customer; // Store the customer object
+
+        // Pre-fill the form fields
+        document.getElementById('customerName').value = customer.name;
+        document.getElementById('customerCity').value = customer.city ? customer.city : '';
+        document.getElementById('customerAge').value = customer.age ? customer.age : '';
+
+        // Show the modal
+        const editCustomerModal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+        editCustomerModal.show();
+      }
+
+      
+      // Handle the Save Changes button click for customers
+      document.getElementById('saveCustomerChangesBtn').addEventListener('click', async function () {
+        if (customerToEdit) {
+          // Get the updated data from the form
+          const updatedCustomer = {
+            name: document.getElementById('customerName').value,
+            city: document.getElementById('customerCity').value,
+            age: parseInt(document.getElementById('customerAge').value)
+          };
+
+          try {
+            // Send PUT request to update the customer
+            await axios.put(`${SERVER}/updateCustomer/${customerToEdit.id}`, updatedCustomer);
+            showCustomersGrid(); // Refresh the grid after saving changes
+
+            const editCustomerModal = bootstrap.Modal.getInstance(document.getElementById('editCustomerModal'));
+            editCustomerModal.hide(); // Close the modal
+          } catch (error) {
+            console.error('Error updating the customer:', error);
+            alert("Failed to update the customer.");
+          }
+        }
+      });
       // Function to open the Edit modal and pre-populate the form
       function openEditModal(book) {
         bookToEdit = book;  // Store the book object
