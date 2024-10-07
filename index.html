@@ -65,6 +65,8 @@
         <!-- Button for Resetting the Database -->
     <div class="container mt-3 text-center">
       <button id="resetDbBtn" class="btn btn-warning">Reset DB</button>
+      <!-- Placeholder for dynamic add button -->
+      <button id="dynamicAddBtn" class="btn btn-success">Add Item</button>
     </div>
 
 
@@ -209,6 +211,49 @@
       </div>
     </div>
 
+    <!-- Modal for Adding Book -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addBookModalLabel">Add Book</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="addBookForm">
+              <div class="mb-3">
+                <label for="bookNameAdd" class="form-label">Name</label>
+                <input type="text" class="form-control" id="bookNameAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookAuthorAdd" class="form-label">Author</label>
+                <input type="text" class="form-control" id="bookAuthorAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookYearAdd" class="form-label">Year Published</label>
+                <input type="number" class="form-control" id="bookYearAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookTypeAdd" class="form-label">Type</label>
+                <input type="text" class="form-control" id="bookTypeAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookAvailableAdd" class="form-label">Available</label>
+                <select class="form-select" id="bookAvailableAdd" required>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveBookBtnAdd">Save Book</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <script>
       const SERVER = 'http://127.0.0.1:5000';
@@ -227,6 +272,8 @@
       // Add event listener for when the slide changes
       myCarousel.addEventListener('slid.bs.carousel', (event) => {
         activeIndex = event.to;
+
+        updateAddButton(activeIndex);  // Call function to update the Add button based on the active index
 
         // Show books on slide 0 (Books)
         if (activeIndex === 0) {
@@ -247,6 +294,39 @@
           console.log('activeIndex 2');
         }
       });
+
+      function updateAddButton() {
+        const addButton = document.getElementById('dynamicAddBtn');
+
+        if (activeIndex === 0) {
+          addButton.textContent = 'Add Book';
+          addButton.onclick = () => openAddBookModal();
+        } else if (activeIndex === 1) {
+          addButton.textContent = 'Add Customer';
+          addButton.onclick = () => openAddCustomerModal();
+        } else if (activeIndex === 2) {
+          addButton.textContent = 'Add Loan';
+          addButton.onclick = () => openAddLoanModal();
+        }
+      }
+
+      // Functions to open respective modals
+      function openAddBookModal() {
+        const addBookModal = new bootstrap.Modal(document.getElementById('addBookModal'));
+        addBookModal.show();
+      }
+
+      function openAddCustomerModal() {
+        const addCustomerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+        addCustomerModal.show();
+      }
+
+      function openAddLoanModal() {
+        const addLoanModal = new bootstrap.Modal(document.getElementById('addLoanModal'));
+        addLoanModal.show();
+      }
+
+      
 
       // Call API of all books and display the grid
       const showBooksGrid = async () => {
@@ -545,7 +625,45 @@
         editCustomerModal.show();
       }
 
-      
+      // Function to handle the 'Add Book' button click
+      document.getElementById('saveBookBtnAdd').addEventListener('click', async function () {
+        // Get the form data
+        const bookName = document.getElementById('bookNameAdd').value;
+        const authorName = document.getElementById('bookAuthorAdd').value;
+        const yearPublished = parseInt(document.getElementById('bookYearAdd').value);
+        const bookType = document.getElementById('bookTypeAdd').value;
+        const isAvailable = document.getElementById('bookAvailableAdd').value === 'true';
+
+        // Create the new book object
+        const newBook = {
+          name: bookName,
+          author: authorName,
+          year_published: yearPublished,
+          type: bookType,
+          is_available: isAvailable
+        };
+
+        try {
+          // Make a POST request to create a new book
+          const response = await axios.post(`${SERVER}/createBook`, newBook);
+          
+          if (response.status === 201) {
+            alert('Book added successfully!');
+            // Optional: close the modal and refresh the grid
+            const addBookModal = bootstrap.Modal.getInstance(document.getElementById('addBookModal'));
+            addBookModal.hide();
+
+            // Refresh the book grid to reflect the newly added book
+            showBooksGrid();
+          } else {
+            alert('Failed to add the book.');
+          }
+        } catch (error) {
+          console.error('Error adding the book:', error);
+          alert('An error occurred while adding the book.');
+        }
+      });
+
       // Handle the Save Changes button click for customers
       document.getElementById('saveCustomerChangesBtn').addEventListener('click', async function () {
         if (customerToEdit) {
@@ -619,6 +737,7 @@
 
       window.onload = () => {
         showBooksGrid(); // Call the function to display books initially
+        updateAddButton()
       };
 
       // Function to reset the database
