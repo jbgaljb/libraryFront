@@ -18,7 +18,7 @@
       <h1>Library</h1>
       <div class="decorative-line"></div>
       <p>A World of Books & Knowledge</p>
-      <p>Note: the carousel can be adjusted with the arrows</p>
+      <p>Note: the carousel can be adjusted with the arrows; Backend has downtime</p>
     </div>
 
     <!-- Carousel Section -->
@@ -286,10 +286,45 @@
       </div>
     </div>
 
-    
+    <!-- Modal for Adding Loan -->
+    <div class="modal fade" id="addLoanModal" tabindex="-1" aria-labelledby="addLoanModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addLoanModalLabel">Add Loan</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="addLoanForm">
+              <div class="mb-3">
+                <label for="loanBookIdAdd" class="form-label">Book ID</label>
+                <input type="number" class="form-control" id="loanBookIdAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="loanCustomerIdAdd" class="form-label">Customer ID</label>
+                <input type="number" class="form-control" id="loanCustomerIdAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="loanDateAdd" class="form-label">Loan Date</label>
+                <input type="date" class="form-control" id="loanDateAdd" required>
+              </div>
+              <div class="mb-3">
+                <label for="returnDateAdd" class="form-label">Return Date</label>
+                <input type="date" class="form-control" id="returnDateAdd" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveLoanBtnAdd">Save Loan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <script>
-      const SERVER = 'http://127.0.0.1:5000';
+      const SERVER = 'https://librarybackend-flask.onrender.com';
       let loanToDelete = null;  // Will store the loan ID to delete
       let bookToDelete = null;  // Will store the book ID to delete
       let customerToDelete = null;  // Will store the customer ID to delete
@@ -863,6 +898,44 @@
         }
       });
 
+      // Function to handle the 'Add Loan' button click
+      document.getElementById('saveLoanBtnAdd').addEventListener('click', async function () {
+        // Get the form data
+        const loanBookId = parseInt(document.getElementById('loanBookIdAdd').value);
+        const loanCustomerId = parseInt(document.getElementById('loanCustomerIdAdd').value);
+        const loanDate = document.getElementById('loanDateAdd').value;
+        const returnDate = document.getElementById('returnDateAdd').value;
+
+        // Create the new loan object
+        const newLoan = {
+          book_id: loanBookId,
+          customer_id: loanCustomerId,
+          loan_date: loanDate,
+          return_date: returnDate
+        };
+
+        try {
+          console.log(newLoan);
+          
+          // Make a POST request to create a new loan
+          const response = await axios.post(`${SERVER}/createLoan`, newLoan);
+          
+          if (response.status === 201) {
+            alert('Loan added successfully!');
+            // Optional: close the modal and refresh the loan grid
+            const addLoanModal = bootstrap.Modal.getInstance(document.getElementById('addLoanModal'));
+            addLoanModal.hide();
+
+            // Refresh the loan grid to reflect the newly added loan
+            showLoansGrid();
+          } else {
+            alert('Failed to add the loan.');
+          }
+        } catch (error) {
+          console.error('Error adding the loan:', error);
+          alert('An error occurred while adding the loan.');
+        }
+      });
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
