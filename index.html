@@ -91,11 +91,56 @@
     </div>
     
 
+        <!-- Modal for editing book details -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editBookForm">
+              <div class="mb-3">
+                <label for="bookName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="bookName" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookAuthor" class="form-label">Author</label>
+                <input type="text" class="form-control" id="bookAuthor" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookYear" class="form-label">Year Published</label>
+                <input type="number" class="form-control" id="bookYear" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookType" class="form-label">Type</label>
+                <input type="text" class="form-control" id="bookType" required>
+              </div>
+              <div class="mb-3">
+                <label for="bookAvailable" class="form-label">Available</label>
+                <select class="form-select" id="bookAvailable" required>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveChangesBtn">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <script>
       const SERVER = 'http://127.0.0.1:5000';
       let loanToDelete = null;  // Will store the loan ID to delete
       let bookToDelete = null;  // Will store the book ID to delete
       let customerToDelete = null;  // Will store the customer ID to delete
+      let bookToEdit = null;
 
 
       // Get the carousel element
@@ -194,6 +239,7 @@
           let editBtn = document.createElement('button');
           editBtn.className = 'btn btn-primary';
           editBtn.textContent = 'Edit';
+          editBtn.onclick = () => openEditModal(book);  // Pass book data to the function
           buttonsCol.appendChild(editBtn);
 
           // Delete button
@@ -372,7 +418,6 @@
         deleteModal.show();
       }
 
-
       document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
         if (loanToDelete) {
           try {
@@ -403,6 +448,48 @@
 
         const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
         deleteModal.hide();
+      });
+
+      // Function to open the Edit modal and pre-populate the form
+      function openEditModal(book) {
+        bookToEdit = book;  // Store the book object
+
+        // Pre-fill the form fields
+        document.getElementById('bookName').value = book.name;
+        document.getElementById('bookAuthor').value = book.author;
+        document.getElementById('bookYear').value = book.year_published;
+        document.getElementById('bookType').value = book.type;
+        document.getElementById('bookAvailable').value = book.is_available ? 'true' : 'false';
+
+        // Show the modal
+        const editModal = new bootstrap.Modal(document.getElementById('editBookModal'));
+        editModal.show();
+      }
+
+            // Handle the Save Changes button click
+      document.getElementById('saveChangesBtn').addEventListener('click', async function () {
+        if (bookToEdit) {
+          // Get the updated data from the form
+          const updatedBook = {
+            name: document.getElementById('bookName').value,
+            author: document.getElementById('bookAuthor').value,
+            year_published: parseInt(document.getElementById('bookYear').value),
+            type: document.getElementById('bookType').value,
+            is_available: document.getElementById('bookAvailable').value === 'true'
+          };
+
+          try {
+            // Send PUT request to update the book
+            await axios.put(`${SERVER}/updateBook/${bookToEdit.id}`, updatedBook);
+            showBooksGrid();  // Refresh the grid after saving changes
+
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editBookModal'));
+            editModal.hide();  // Close the modal
+          } catch (error) {
+            console.error('Error updating the book:', error);
+            alert("Failed to update the book.");
+          }
+        }
       });
 
       // Function to reset the grid when switching slides
